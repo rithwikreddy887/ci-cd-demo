@@ -1,14 +1,23 @@
 name: CI Pipeline
+
 on:
   push:
     branches: ["main"]
+
 jobs:
   build:
+
     runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: write
+
     steps:
-    
+
     - name: Checkout code
       uses: actions/checkout@v4
+
     - name: Setup Python
       uses: actions/setup-python@v5
       with:
@@ -28,6 +37,14 @@ jobs:
       run: |
         PYTHONPATH=. pytest -v
 
-    - name: Build Docker Image
+    - name: Log in to GitHub Container Registry
       run: |
-        docker build -t ci-cd-demo .
+        echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+    - name: Build Docker image
+      run: |
+        docker build -t ghcr.io/${{ github.repository_owner }}/ci-cd-demo:latest .
+
+    - name: Push Docker image
+      run: |
+        docker push ghcr.io/${{ github.repository_owner }}/ci-cd-demo:latest=
